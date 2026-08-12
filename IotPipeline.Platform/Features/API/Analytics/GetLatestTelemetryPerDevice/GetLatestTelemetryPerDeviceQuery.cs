@@ -1,0 +1,3 @@
+﻿namespace IotPipeline.Platform.Features.API.Analytics.GetLatestTelemetryPerDevice;
+
+public record GetLatestTelemetryPerDeviceQuery;

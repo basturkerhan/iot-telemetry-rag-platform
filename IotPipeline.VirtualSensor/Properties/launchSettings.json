@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "IotPipeline.VirtualSensor": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

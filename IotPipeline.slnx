@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="IotPipeline.Platform/IotPipeline.Platform.csproj" />
+  <Project Path="IotPipeline.VirtualSensor/IotPipeline.VirtualSensor.csproj" />
+</Solution>

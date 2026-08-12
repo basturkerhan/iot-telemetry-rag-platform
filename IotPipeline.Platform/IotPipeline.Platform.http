@@ -1,0 +1,6 @@
+@IotPipeline.Platform_HostAddress = http://localhost:5094
+
+GET {{IotPipeline.Platform_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
