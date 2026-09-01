@@ -8,15 +8,25 @@ using IotPipeline.Platform.Features.Bridge.Services;
 using IotPipeline.Platform.Infrastructure;
 using IotPipeline.Platform.Infrastructure.Services;
 using MassTransit;
+using MassTransit.Logging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using RabbitMQ.Client;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
 var configuration = builder.Configuration;
+
+builder.Host.UseSerilog((ctx, s, c) => c
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(s));
 
 #region Options Pattern
 services.Configure<MqttSettings>(configuration.GetSection("MqttSettings"));
@@ -59,6 +69,49 @@ services.AddMassTransit(x =>
 services.AddValidatorsFromAssemblyContaining<Program>();
 #endregion
 
+#region OpenTelemetry
+
+var serviceName = configuration["OTEL:ServiceName"]
+                  ?? "IotPipeline.Platform";
+
+var otelEndpoint = configuration["OTEL:Endpoint"]
+                   ?? "http://localhost:4317";
+
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource =>
+        resource.AddService(serviceName))
+    .WithTracing(tracing => tracing
+        .AddSource(serviceName)
+        .AddSource(DiagnosticHeaders.DefaultListenerName)
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            options.Filter = context =>
+                !context.Request.Path.StartsWithSegments("/health") &&
+                !context.Request.Path.StartsWithSegments("/analytics-hub");
+        })
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otelEndpoint);
+            options.Protocol = OtlpExportProtocol.Grpc;
+        }))
+    .WithMetrics(metrics => metrics
+        .AddMeter(serviceName)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddProcessInstrumentation()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otelEndpoint);
+            options.Protocol = OtlpExportProtocol.Grpc;
+        }));
+
+#endregion
+
+
 #region Global Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -100,6 +153,8 @@ services
     .AddSignalR();
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 app.UseCors("AllowAll");
 

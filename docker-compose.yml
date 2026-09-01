@@ -19,7 +19,13 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     networks:
       - iot_network
-  
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+      
   # 3. PostgreSQL + pgvector
   postgres:
     image: pgvector/pgvector:pg16
@@ -42,8 +48,10 @@ services:
     networks:
       - iot_network
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8000:8080"
     environment:
@@ -56,7 +64,10 @@ services:
       - RabbitMQSettings__Username=${RABBITMQ_USER}
       - RabbitMQSettings__Password=${RABBITMQ_PASS}
       - GeminiSettings__ApiKey=${GEMINI_API_KEY}
-      - ASPNETCORE_ENVIRONMENT=Development
+      - OTEL__ServiceName=${OTEL_PLATFORM_SERVICENAME}
+      - OTEL__Endpoint=${OTEL_TEMPO_ENDPOINT}
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Serilog__WriteTo__1__Args__uri=${OTEL_LOKI_ENDPOINT}
       
   web-ui:
     build:
@@ -85,9 +96,25 @@ services:
       - MqttSettings__Port=1883
       - MqttSettings__PublishIntervalMs=2000
       - MqttSettings__TopicPrefix=factory/telemetry
+      - OTEL__ServiceName=${OTEL_SENSOR_SERVICENAME}
+      - OTEL__Endpoint=${OTEL_TEMPO_ENDPOINT}
+    
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: iot_lgtm
+    networks:
+      - iot_network
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       
 volumes:
   postgres_data:
+  grafana_data:
   
 networks:
   iot_network:

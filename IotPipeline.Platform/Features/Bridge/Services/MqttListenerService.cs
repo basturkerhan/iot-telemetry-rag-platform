@@ -3,6 +3,7 @@ using IotPipeline.Platform.Features.Bridge.Contracts;
 using MassTransit;
 using Microsoft.Extensions.Options;
 using MQTTnet;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
@@ -18,6 +19,7 @@ public class MqttListenerService(
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly ILogger<MqttListenerService> _logger = logger;
     private readonly MqttSettings _mqttSettings = mqttSettings.Value;
+    private readonly ActivitySource _activitySource = new(configuration["OTEL:ServiceName"] ?? "IotPipeline.Platform");
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -44,6 +46,34 @@ public class MqttListenerService(
 
                 if (telemetry != null)
                 {
+                    ActivityContext parsedContext = default;
+                    bool hasParentContext = false;
+                    if (!string.IsNullOrEmpty(telemetry.TraceId) && !string.IsNullOrEmpty(telemetry.SpanId))
+                    {
+                        try
+                        {
+                            var traceId = ActivityTraceId.CreateFromString(telemetry.TraceId);
+                            var spanId = ActivitySpanId.CreateFromString(telemetry.SpanId);
+
+                            if (traceId != default && spanId != default)
+                            {
+                                parsedContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded);
+                                hasParentContext = true;
+                            }
+                        }
+                        catch {}
+                    }
+
+                    using var activity = hasParentContext
+                        ? _activitySource.StartActivity("ConsumeFromMqtt", ActivityKind.Consumer, parsedContext)
+                        : _activitySource.StartActivity("ConsumeFromMqtt", ActivityKind.Consumer);
+
+                    activity?.SetTag("iot.device.id", telemetry.DeviceId);
+                    activity?.SetTag("iot.temperature", telemetry.Temperature);
+                    activity?.SetTag("iot.humidity", telemetry.Humidity);
+                    activity?.SetTag("iot.vibration", telemetry.Vibration);
+                    activity?.SetTag("iot.timestamp", telemetry.Timestamp);
+
                     using var scope = _scopeFactory.CreateScope();
                     var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
                     await publishEndpoint.Publish(telemetry, stoppingToken);

@@ -31,7 +31,8 @@ An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly det
 * **SignalR:** Server-to-Client streaming pushing live telemetry readings every 3 seconds to connected dashboards via WebSockets.
 * **Local Embeddings (ONNX):** In-process 384-dimensional vector embedding engine running without external network dependencies.
 * **Google Gemini 3.6 Flash:** Large Language Model utilized for semantic reasoning and context-grounded anomaly analysis.
-* **Docker & Docker Compose:** Containerized environment orchestrating Mosquitto, RabbitMQ, and PostgreSQL instances.
+* **Grafana LGTM Stack (Loki, Grafana, Tempo, Prometheus):** Unified open-source observability platform providing end-to-end telemetry monitoring, distributed tracing, live application log streams, and custom performance dashboards.
+* **Docker & Docker Compose:** Containerized environment orchestrating Mosquitto, RabbitMQ, PostgreSQL and LGTM instances
 
 ### Frontend
 * **Next.js (React) & TypeScript:** Modern, type-safe reactive dashboard.
@@ -85,6 +86,25 @@ An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly det
 
 ---
 
+## 📊 Observability & Monitoring (Grafana LGTM)
+The platform features an integrated Grafana LGTM (Loki, Grafana, Tempo) observability stack designed to monitor system health, throughput, and distributed performance in real-time.
+
+![Image 3](images/image-03.png)
+
+### What You Can Monitor via the Dashboard
+* **Real-time Sensor Ingestion Rate (Throughput):** Track live incoming message rates per second across all platform services using Loki log queries.
+
+* **System Error Rate:** Monitor critical errors or exceptions across microservices instantly.
+
+* **End-to-End Distributed Traces & Latency:** Inspect execution spans (PublishToMqtt, ConsumeFromMqtt, GenerateEmbeddingsBatch, and SaveTelemetryBatchToDatabase) across both IotPipeline.Sensor and IotPipeline.Platform.
+
+* **Local Embedding Time:** Evaluate the processing speed of the in-process 384-dimensional ONNX vectorization pipeline.
+
+* **Live Application Logs:** Stream structured backend logs directly within the Grafana interface for rapid debugging.
+
+![Image 4](images/image-04.png)
+---
+
 ## ⚡ Performance & Database Optimizations
 
 * **HNSW Vector Indexing:** Employs Hierarchical Navigable Small World graphs (`vector_cosine_ops`) over 384-dimensional vectors to achieve $O(\log N)$ query speed, preventing full-table scans.
@@ -109,4 +129,11 @@ Create a .env file using the .env.example file and prepare its contents.
 docker compose up -d
 ```
 
-Navigate to `http://localhost:3000` to interact with the real-time telemetry feed and the AI Assistant.
+---
+
+## Access Points
+#### Web UI (Real-time Telemetry & AI Assistant)
+Navigate to http://localhost:3000
+
+#### Grafana Observability Dashboard
+Navigate to http://localhost:3001 and import the dashboard (/grafana/dashboard/iot-dashboard.json) to inspect live metrics, traces, and application logs.

@@ -5,5 +5,7 @@ public record TelemetryReceivedEvent(
     double Temperature,
     double Humidity,
     double Vibration,
-    DateTime Timestamp
+    DateTime Timestamp,
+    string? TraceId,
+    string? SpanId
 );

@@ -9,6 +9,8 @@
 appsettings.*.json
 !appsettings.json
 
+/test
+
 # User-specific files
 *.rsuser
 *.suo
