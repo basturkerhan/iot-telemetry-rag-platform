@@ -3,7 +3,7 @@
 ![Image 1](images/image-01.png)
 ![Image 2](images/image-02.png)
 
-An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly detection demo platform. The system collects high-frequency virtual sensor data from virtual industrial IoT edge devices , processes it through asynchronous messaging pipelines, stores vector embeddings in **PostgreSQL (pgvector)**, and performs **Generative AI / RAG (Retrieval-Augmented Generation)** analysis for explainable real-time insights.
+A production-minded, end-to-end telemetry monitoring and intelligent anomaly analysis demo platform. The system collects high-frequency virtual sensor data from virtual industrial IoT edge devices , processes it through asynchronous messaging pipelines, stores vector embeddings in **PostgreSQL (pgvector)**, and performs **Generative AI / RAG (Retrieval-Augmented Generation)** analysis for explainable real-time insights.
 
 ---
 
@@ -15,7 +15,7 @@ An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly det
 * **Extensible & Pluggable AI and Embedding Services (SOLID):** 
   * The solution abstracts all artificial intelligence and vector generation operations behind dedicated interfaces (`IRagService` and `IEmbeddingService`).
   * Any alternative AI provider (e.g., OpenAI, Anthropic Claude, local Ollama/LlamaSharp) or embedding engine can be plugged in by implementing the respective interface without modifying existing business logic or API endpoints.
-* **Hybrid Local/Cloud RAG Pipeline:** Embedding calculations are performed locally on the CPU (zero API cost, zero network latency), while LLM reasoning is handled dynamically with compact context formatting.
+* **Hybrid Local/Cloud RAG Pipeline:** Embeddings are generated locally on the CPU, eliminating external embedding API costs and network dependencies, while LLM reasoning is handled dynamically with compact context formatting.
 
 ---
 
@@ -31,7 +31,7 @@ An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly det
 * **SignalR:** Server-to-Client streaming pushing live telemetry readings every 3 seconds to connected dashboards via WebSockets.
 * **Local Embeddings (ONNX):** In-process 384-dimensional vector embedding engine running without external network dependencies.
 * **Google Gemini 3.6 Flash:** Large Language Model utilized for semantic reasoning and context-grounded anomaly analysis.
-* **Grafana LGTM Stack (Loki, Grafana, Tempo, Prometheus):** Unified open-source observability platform providing end-to-end telemetry monitoring, distributed tracing, live application log streams, and custom performance dashboards.
+* **Grafana LGTM Stack:** Unified observability platform combining logs, metrics, distributed traces, and dashboards through Loki, Prometheus, Tempo, and Grafana.
 * **Docker & Docker Compose:** Containerized environment orchestrating Mosquitto, RabbitMQ, PostgreSQL and LGTM instances
 
 ### Frontend
@@ -87,7 +87,7 @@ An enterprise-grade, end-to-end telemetry monitoring and intelligent anomaly det
 ---
 
 ## 📊 Observability & Monitoring (Grafana LGTM)
-The platform features an integrated Grafana LGTM (Loki, Grafana, Tempo) observability stack designed to monitor system health, throughput, and distributed performance in real-time.
+The platform features an integrated Grafana LGTM Observability Stack designed to monitor system health, throughput, and distributed performance in real-time.
 
 ![Image 3](images/image-03.png)
 
@@ -107,9 +107,9 @@ The platform features an integrated Grafana LGTM (Loki, Grafana, Tempo) observab
 
 ## ⚡ Performance & Database Optimizations
 
-* **HNSW Vector Indexing:** Employs Hierarchical Navigable Small World graphs (`vector_cosine_ops`) over 384-dimensional vectors to achieve $O(\log N)$ query speed, preventing full-table scans.
-* **Composite B-Tree Indexes:** Defined on `(DeviceId, Timestamp DESC)` for multi-tenant and time-series lookups.
-* **Memory & I/O Batching:** Replaces discrete single-row insertions with chunked batch writes, cutting database connection overhead by over 80%.
+* **HNSW Vector Indexing:** HNSW-based approximate nearest-neighbor search for efficient vector retrieval.
+* **Composite B-Tree Indexes:** Defined on (DeviceId, Timestamp DESC) for efficient device-specific and time-series lookups.
+* **Batch Ingestion:** Buffers telemetry messages into configurable batches, reducing database round-trips and improving ingestion efficiency.
 * **Token-Optimized Context Formatting:** Telemetry contexts are arranged in short lines separated by delimiters.
 
 ---
